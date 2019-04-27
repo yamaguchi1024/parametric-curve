@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title id="title">[utokyo-iscg-2019] Basic Assignment 1 (Spline)</title>
+<title id="title">[utokyo-iscg-2019] Basic Assignment 1 - Yuka Takahashi</title>
 <script src="gl-matrix.js"></script>
 <script src="gl-matrix-util.js"></script>
 <script src="legacygl.js"></script>
@@ -21,7 +21,9 @@ var p0, p1, p2;
 var selected = null;
 
 function eval_quadratic_bezier(p0, p1, p2, t) {
-    return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));     // TODO
+    // return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));     // TODO
+  console.log(p0);  
+  return numeric.add(numeric.add(numeric.mul(numeric.mul(1-t,1-t), p0),numeric.mul(2, numeric.mul(t, numeric.mul((1-t), p1)))), numeric.mul(numeric.mul(t,t), p2));
 }
 
 function draw() {
