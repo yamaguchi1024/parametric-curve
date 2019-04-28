@@ -71,6 +71,11 @@ function draw() {
     legacygl.end();
     legacygl.begin(gl.POINTS);
     for (let i = 0; i < points.length; i++) {
+      if (i === selected) {
+        legacygl.color(0, 0, 0.9);
+        legacygl.vertex2(points[i]);
+        legacygl.color(0.2, 0.5, 1);
+      }
       legacygl.vertex2(points[i]);
     }
 
@@ -85,16 +90,15 @@ function getMousePos (mouse_win) {
     legacygl.uniforms.modelview.value,
     legacygl.uniforms.projection.value,
     [0, 0, canvas.width, canvas.height]);
-  
-  
-      // just reuse the same code as the 3D case
-      let plane_origin = [0, 0, 0];
-      let plane_normal = [0, 0, 1];
-      let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
-      let eye_to_origin = numeric.sub(plane_origin, camera.eye);
-      let s1 = numeric.dot(eye_to_mouse, plane_normal);
-      let s2 = numeric.dot(eye_to_origin, plane_normal);
-      return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+
+  // just reuse the same code as the 3D case
+  let plane_origin = [0, 0, 0];
+  let plane_normal = [0, 0, 1];
+  let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
+  let eye_to_origin = numeric.sub(plane_origin, camera.eye);
+  let s1 = numeric.dot(eye_to_mouse, plane_normal);
+  let s2 = numeric.dot(eye_to_origin, plane_normal);
+  return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
 
 }
 
