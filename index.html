@@ -20,6 +20,7 @@ let canvas;
 let legacygl;
 let drawutil;
 let camera;
+
 let num_points = 0;
 let points = [];
 let selected = null;
@@ -27,6 +28,7 @@ let selected = null;
 // ポイントが動くモードに入っているか
 let ispointmove = false;
 // 右クリックを押したときのマウスの位置、ポイントを追加する為に必要
+
 let right_click_mouse_pos;
 
 function eval_quadratic_bezier(p0, p1, p2, t) {
@@ -58,7 +60,9 @@ function draw() {
     let numsteps = Number(document.getElementById("input_numsteps").value);
     for (let i = 0; i <= numsteps; ++i) {
         let t = i / numsteps;
+
         //legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
+
     }
     legacygl.end();
   
@@ -67,7 +71,9 @@ function draw() {
         legacygl.begin(gl.POINTS);
         for (let i = 0; i <= numsteps; ++i) {
             let t = i / numsteps;
+
             //legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
+
         }
         legacygl.end();
     }
@@ -150,9 +156,11 @@ function init() {
             return;
         }
         // pick nearest object
+
         let viewport = [0, 0, canvas.width, canvas.height];
         let dist_min = 10000000;
         for (let i = 0; i < points.length; ++i) {
+
             let object_win = glu.project([points[i][0], points[i][1], 0], 
                                          legacygl.uniforms.modelview.value,
                                          legacygl.uniforms.projection.value,
@@ -179,10 +187,12 @@ function init() {
             draw();
             return;
         }
+
         if (ispointmove) {
             // マウスのポジションを取得するためのhelper function  
             let mouse_obj = getMousePos(mouse_win);
           
+
             // just reuse the same code as the 3D case
             let plane_origin = [0, 0, 0];
             let plane_normal = [0, 0, 1];
