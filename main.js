@@ -280,24 +280,19 @@ function splitCurve (e) {
   const cur_bez = beziers[nearest_bez_bezier];
   const t = cur_bez.curve[nearest_bez_itr][1];
 
-  const new_p0 = cur_bez.deCas(cur_bez.points.length - 2, 0, t);
-  const new_p1 = cur_bez.deCas(cur_bez.points.length - 1, 1, t);
-
   let new_bez_1 = new Bezier();
   let new_bez_2 = new Bezier();
   beziers.push(new_bez_1);
   beziers.push(new_bez_2);
 
-  new_bez_2.points.push(nearest_bez_point);
   for (let i = 0; i < cur_bez.points.length; i++) {
-    if (cur_bez.points[i] < cur_bez.points.length - 2) {
-      new_bez_1.points.push(cur_bez.points[i]);
-    } else if (cur_bez.points[i] > 1) {
-      new_bez_2.points.push(cur_bez.points[i])
-    }
+    new_bez_1.points.push(cur_bez.deCas(i, 0, t));
   }
-  new_bez_1.points.push(nearest_bez_point);
-  
+
+  for (let i = 0; i < cur_bez.points.length; i++) {
+    new_bez_2.points.push(cur_bez.deCas(cur_bez.points.length - i - 1, i, t));
+  }
+
   beziers.splice(nearest_bez_bezier, 1);
 
   draw();
