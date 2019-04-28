@@ -67,19 +67,20 @@ function draw() {
     for (let i = 0; i < points.length; i++) {
       legacygl.vertex2(points[i]);
     }
-
     legacygl.end();
+
     legacygl.begin(gl.POINTS);
     for (let i = 0; i < points.length; i++) {
       if (i === selected) {
-        legacygl.color(0, 0, 0.9);
+        legacygl.color(0.9, 0, 0);
         legacygl.vertex2(points[i]);
         legacygl.color(0.2, 0.5, 1);
+      } else {
+        legacygl.vertex2(points[i]);
       }
-      legacygl.vertex2(points[i]);
     }
-
     legacygl.end();
+
   }
 };
 
@@ -193,7 +194,6 @@ function init() {
 
     if (ispointmove) {
       // マウスのポジションを取得するためのhelper function  
-
       let eye_to_intersection = getMousePos(mouse_win);
 
       vec2.copy(points[selected], numeric.add(camera.eye, eye_to_intersection));
