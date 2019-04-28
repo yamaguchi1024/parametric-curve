@@ -11,6 +11,9 @@
 <script src="util.js"></script>
 <script src="glu.js"></script>
 <script src="numeric-1.2.6.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+  
 <script type="text/javascript">
 var gl;
 var canvas;
@@ -19,11 +22,14 @@ var drawutil;
 var camera;
 var p0, p1, p2;
 var selected = null;
+var delete_vertex = false;
+var right_click_mouse_pos;
 
 function eval_quadratic_bezier(p0, p1, p2, t) {
     // return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));     // TODO
-  console.log(p0);  
-  return numeric.add(numeric.add(numeric.mul(numeric.mul(1-t,1-t), p0),numeric.mul(2, numeric.mul(t, numeric.mul((1-t), p1)))), numeric.mul(numeric.mul(t,t), p2));
+    // Two dimension bezier curve
+    return numeric.add(numeric.add(numeric.mul(numeric.mul(1-t,1-t), p0),
+             numeric.mul(2, numeric.mul(t, numeric.mul((1-t), p1)))), numeric.mul(numeric.mul(t,t), p2));
 }
 
 function draw() {
@@ -71,7 +77,9 @@ function draw() {
         legacygl.end();
     }
 };
+
 function init() {
+
     // OpenGL context
     canvas = document.getElementById("canvas");
     gl = canvas.getContext("experimental-webgl");
@@ -109,8 +117,14 @@ function init() {
     p0 = [-0.5, -0.6];
     p1 = [1.2, 0.5];
     p2 = [-0.4, 1.3];
+  
     // event handlers
     canvas.onmousedown = function(evt) {
+        // 右クリックの時に選択画面は出るけど点は動かないようにする
+        if (evt.button != 0) {
+          return;
+        }
+      
         var mouse_win = this.get_mousepos(evt);
         if (evt.altKey) {
             camera.start_moving(mouse_win, evt.shiftKey ? "zoom" : "pan");
@@ -132,6 +146,14 @@ function init() {
             }
         }
     };
+  
+      
+    // Context Menu! Right click.
+    canvas.oncontextmenu = function (e){
+      right_click_mouse_pos = this.get_mousepos(evt);
+    };
+    
+
     canvas.onmousemove = function(evt) {
         var mouse_win = this.get_mousepos(evt);
         if (camera.is_moving()) {
@@ -169,11 +191,23 @@ function init() {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(1, 1, 1, 1);
 };
+  
+function deleteVertex (e) {
+    delete_vertex = true;
+};
+  
 </script>
+
 </head>
 <body onload="init(); draw();">
   <h2><a target="_blank" href="http://research.nii.ac.jp/~takayama/teaching/utokyo-iscg-2019/"><script type="text/javascript">document.write(document.getElementById("title").innerHTML);</script></a></h2>
-  <canvas id="canvas" width="640" height="480" style="border:1px solid #000000"></canvas>
+  
+  <menu type="context" id="menu-id">
+    <menuitem label="Delete Vertex" onclick="deleteVertex(event);" icon="/path/to/icon.png"></menuitem>
+  </menu>
+  
+  <canvas id="canvas" contextmenu="menu-id" width="640" height="480" style="border:1px solid #000000"></canvas>
+  
   <table>
     <tr>
       <td>Number of Steps:</td>
@@ -188,6 +222,7 @@ function init() {
       <td colspan="2"><input type="checkbox" id="input_show_samplepoints" onchange="draw();" checked></td>
     </tr>
   </table>
+  
   <h3>Usage:</h3>
   <ul>
     <li>Drag: Move Control Points</li>
@@ -197,5 +232,6 @@ function init() {
 
   <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>
   <script src="https://button.glitch.me/button.js"></script>
+  
 </body>
 </html>
