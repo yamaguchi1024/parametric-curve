@@ -80,10 +80,22 @@ function draw() {
 
 function getMousePos (mouse_win) {
   mouse_win.push(1);
-  return glu.unproject(mouse_win, 
+
+  let mouse_obj = glu.unproject(mouse_win, 
     legacygl.uniforms.modelview.value,
     legacygl.uniforms.projection.value,
     [0, 0, canvas.width, canvas.height]);
+  
+  
+      // just reuse the same code as the 3D case
+      let plane_origin = [0, 0, 0];
+      let plane_normal = [0, 0, 1];
+      let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
+      let eye_to_origin = numeric.sub(plane_origin, camera.eye);
+      let s1 = numeric.dot(eye_to_mouse, plane_normal);
+      let s2 = numeric.dot(eye_to_origin, plane_normal);
+      return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+
 }
 
 function init() {
@@ -123,8 +135,10 @@ function init() {
   camera.eye = [0, 0, 7];
 
   // ポイントたちを初期化
-  // points.push([-0.5, -0.6]);
-  // points.push([1.2, 0.5]);
+
+  points.push([-0.5, -0.6]);
+  points.push([1.2, 0.5]);
+
   // points.push([-0.4, 1.3]);
   // points.push([-0.4, 1.0]);
 
@@ -175,16 +189,9 @@ function init() {
 
     if (ispointmove) {
       // マウスのポジションを取得するためのhelper function  
-      let mouse_obj = getMousePos(mouse_win);
 
-      // just reuse the same code as the 3D case
-      let plane_origin = [0, 0, 0];
-      let plane_normal = [0, 0, 1];
-      let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
-      let eye_to_origin = numeric.sub(plane_origin, camera.eye);
-      let s1 = numeric.dot(eye_to_mouse, plane_normal);
-      let s2 = numeric.dot(eye_to_origin, plane_normal);
-      let eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+      let eye_to_intersection = getMousePos(mouse_win);
+
       vec2.copy(points[selected], numeric.add(camera.eye, eye_to_intersection));
       draw();
     }
