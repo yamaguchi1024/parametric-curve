@@ -230,7 +230,11 @@ function init() {
 };
 
 function deleteVertex (e) {
-  beziers[nearest_cont_bezier].points.splice(nearest_cont_itr, 1);
+  if (beziers[nearest_cont_bezier].points.length <= 1) {
+    beziers.splice(nearest_cont_bezier,1);
+  } else {
+    beziers[nearest_cont_bezier].points.splice(nearest_cont_itr, 1);
+  }
   draw();
 };
 
