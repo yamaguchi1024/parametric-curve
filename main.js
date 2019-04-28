@@ -4,21 +4,54 @@ let legacygl;
 let drawutil;
 let camera;
 
-let points = [];
-let selected = null;
-
-// ポイントが動くモードに入っているか
-let ispointmove = false;
+// 画面上にあるBezierのインスタンス
+let beziers = [];
+// 本当にselected
+let selected_cont_itr;
+let selected_cont_point;
+let selected_cont_bezier;
+// 一番近い制御点
+let nearest_cont_itr;
+let nearest_cont_point;
+let nearest_cont_bezier;
+// 一番近いベジェ曲線の点
+let nearest_bez_itr;
+let nearest_bez_point;
+let nearest_bez_bezier;
 // 右クリックを押したときのマウスの位置、ポイントを追加する為に必要
 let right_click_mouse_pos;
+// マウスムーブのポジションを常に持ってく
+let mouse_move_pos;
+// ポイントが動くモードに入っているか
+let ispointmove = false;
 
-function eval_quadratic_bezier(p0, p1, p2, t) {
-  // 元のコード
-  // return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));
+class Bezier {
+  constructor () {
+    this.points = [];
+    // カーブを分割するt
+    this.curve = [];
+  }
 
-  // Two dimension bezier curve. 二次ベジェ曲線
-  return numeric.add(numeric.add(numeric.mul(numeric.mul(1-t,1-t), p0),
-    numeric.mul(2, numeric.mul(t, numeric.mul((1-t), p1)))), numeric.mul(numeric.mul(t,t), p2));
+  deCas (i, j, t) {
+    if (i === 0) {
+      return this.points[j];
+    }
+
+    const res = numeric.add(numeric.mul(1-t, this.deCas(i-1,j,t)), numeric.mul(t, this.deCas(i-1,j+1,t)));
+    return res;
+  }
+
+  eval_quadratic_bezier(t) {
+    // 元のコード
+    // return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));
+
+    // Two dimension bezier curve. 二次ベジェ曲線
+    // return numeric.add(numeric.add(numeric.mul(numeric.mul(1-t,1-t), p0),
+    //  numeric.mul(2, numeric.mul(t, numeric.mul((1-t), p1)))), numeric.mul(numeric.mul(t,t), p2));
+    //
+    // n次ベジェ曲線
+    return this.deCas(this.points.length - 1, 0, t);
+  }
 }
 
 function draw() {
@@ -33,96 +66,67 @@ function draw() {
   legacygl.color(0.5, 0.5, 0.5);
   drawutil.xygrid(100);
 
-  // draw line segments composing curve
-  legacygl.color(1, 0.6, 0.2);
-  legacygl.begin(gl.LINE_STRIP);
-  let numsteps = Number(document.getElementById("input_numsteps").value);
-  for (let i = 0; i <= numsteps; ++i) {
-    let t = i / numsteps;
-
-    //legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
-
+  for (let b = 0; b < beziers.length; b++) {
+    beziers[b].curve = [];
   }
 
-  legacygl.end();
+  // draw line segments composing curve
+  legacygl.color(1, 0.6, 0.2);
+  let numsteps = Number(document.getElementById("input_numsteps").value);
+  for (let b = 0; b < beziers.length; b++) {
+    legacygl.begin(gl.LINE_STRIP);
+    for (let i = 0; i <= numsteps; ++i) {
+      let t = i / numsteps;
+      beziers[b].curve.push([beziers[b].eval_quadratic_bezier(t), t]);
+      legacygl.vertex2(beziers[b].curve[i][0]);
+    }
+    legacygl.end();
+  }
 
   // draw sample points
   if (document.getElementById("input_show_samplepoints").checked) {
-    legacygl.begin(gl.POINTS);
-    for (let i = 0; i <= numsteps; ++i) {
-      let t = i / numsteps;
-
-      //legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
-
+    for (let b = 0; b < beziers.length; b++) {
+      legacygl.begin(gl.POINTS);
+      for (let i = 0; i <= numsteps; ++i) {
+        // 選択された点はハイライトする
+        if (i === nearest_bez_itr && b === nearest_bez_bezier) {
+          legacygl.color(0.9, 0, 0);
+          legacygl.vertex2(beziers[b].curve[i][0]);
+          legacygl.color(1, 0.6, 0.2);
+        } else {
+          legacygl.vertex2(beziers[b].curve[i][0]);
+        }
+      }
+      legacygl.end();
     }
-    legacygl.end();
   }
 
   // draw control points
   if (document.getElementById("input_show_controlpoints").checked) {
     legacygl.color(0.2, 0.5, 1);
-    legacygl.begin(gl.LINE_STRIP);
-    for (let i = 0; i < points.length; i++) {
-      legacygl.vertex2(points[i]);
-    }
-    legacygl.end();
-
-    legacygl.begin(gl.POINTS);
-    for (let i = 0; i < points.length; i++) {
-      if (i === selected) {
-        legacygl.color(0.9, 0, 0);
-        legacygl.vertex2(points[i]);
-        legacygl.color(0.2, 0.5, 1);
-      } else {
-        legacygl.vertex2(points[i]);
+    for (let b = 0; b < beziers.length; b++) {
+      legacygl.begin(gl.LINE_STRIP);
+      for (let i = 0; i < beziers[b].points.length; i++) {
+        legacygl.vertex2(beziers[b].points[i]);
       }
+      legacygl.end();
     }
-    legacygl.end();
 
+    for (let b = 0; b < beziers.length; b++) {
+      legacygl.begin(gl.POINTS);
+      for (let i = 0; i < beziers[b].points.length; i++) {
+        if (i === nearest_cont_itr && b == nearest_cont_bezier) {
+          legacygl.color(0.9, 0, 0);
+          legacygl.vertex2(beziers[b].points[i]);
+          legacygl.color(0.2, 0.5, 1);
+        } else {
+          legacygl.vertex2(beziers[b].points[i]);
+        }
+      }
+      legacygl.end();
+    }
   }
 };
-
-function getMousePos (mouse_win) {
-  mouse_win.push(1);
-
-  let mouse_obj = glu.unproject(mouse_win, 
-    legacygl.uniforms.modelview.value,
-    legacygl.uniforms.projection.value,
-    [0, 0, canvas.width, canvas.height]);
-
-  // just reuse the same code as the 3D case
-  let plane_origin = [0, 0, 0];
-  let plane_normal = [0, 0, 1];
-  let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
-  let eye_to_origin = numeric.sub(plane_origin, camera.eye);
-  let s1 = numeric.dot(eye_to_mouse, plane_normal);
-  let s2 = numeric.dot(eye_to_origin, plane_normal);
-  return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
-
-}
-
-function nearestPoint (excludePoints, mouse_win) {
-  let viewport = [0, 0, canvas.width, canvas.height];
-  let dist_min = 10000000;
-  let nearest;
-  for (let i = 0; i < points.length; ++i) {
-    if (excludePoints.includes(i)) {
-      continue;
-    }
-
-    let object_win = glu.project([points[i][0], points[i][1], 0], 
-      legacygl.uniforms.modelview.value,
-      legacygl.uniforms.projection.value,
-      viewport);
-    let dist = vec2.dist(mouse_win, object_win);
-    if (dist < dist_min) {
-      dist_min = dist;
-      nearest = i;
-    }
-  }
-
-  return nearest;
-}
 
 function init() {
   // OpenGL context
@@ -160,11 +164,12 @@ function init() {
   camera = get_camera(canvas.width);
   camera.eye = [0, 0, 7];
 
+  // ベジェ曲線を初期化
   // ポイントたちを初期化
-  points.push([-0.5, -0.6]);
-  points.push([1.2, 0.5]);
-  // points.push([-0.4, 1.3]);
-  // points.push([-0.4, 1.0]);
+  beziers.push(new Bezier());
+  beziers[0].points.push([-0.5, -0.6]);
+  beziers[0].points.push([1.2, 0.5]);
+  beziers[0].points.push([-0.4, 1.3]);
 
   // マウスが押された時
   canvas.onmousedown = function(evt) {
@@ -172,6 +177,10 @@ function init() {
     if (evt.button === 0) {
       ispointmove = true;
     }
+
+    selected_cont_bezier = nearest_cont_bezier;
+    selected_cont_itr = nearest_cont_itr;
+    selected_cont_point = nearest_cont_point;
 
     let mouse_win = this.get_mousepos(evt);
     if (evt.altKey) {
@@ -187,22 +196,23 @@ function init() {
   };
 
   canvas.onmousemove = function(evt) {
-    let mouse_win = this.get_mousepos(evt);
+    mouse_move_pos = this.get_mousepos(evt);
     if (camera.is_moving()) {
-      camera.move(mouse_win);
+      camera.move(mouse_move_pos);
       draw();
       return;
     }
 
     // マウスを近くにするだけで、一番近い制御点がハイライトされるようにする
-    selected = nearestPoint([], mouse_win);
+    [nearest_cont_bezier, nearest_cont_itr, nearest_cont_point] = findNearestPoint(mouse_move_pos);
+    // マウスに一番近いベジェ曲線上の点
+    [nearest_bez_bezier, nearest_bez_itr, nearest_bez_point] = findNearestCurve(mouse_move_pos);
 
     if (ispointmove) {
       // マウスのポジションを取得するためのhelper function  
-      let eye_to_intersection = getMousePos(mouse_win);
-      vec2.copy(points[selected], numeric.add(camera.eye, eye_to_intersection));
+      let mouse_obj = getMousePos(mouse_move_pos);
+      vec2.copy(selected_cont_point, numeric.add(camera.eye, mouse_obj));
     }
-
     draw();
   }
 
@@ -220,7 +230,7 @@ function init() {
 };
 
 function deleteVertex (e) {
-  points.splice(selected, 1);
+  beziers[nearest_cont_bezier].points.splice(nearest_cont_itr, 1);
   draw();
 };
 
@@ -231,24 +241,152 @@ function addVertex (e) {
   // 一定以上の場合は、0とpoints.lengthの近い方にくっつける
   let min_length_to_line = 1000000;
   let nearest_to_line = 0;
-  for (let i = 0; i < points.length - 1; i++ ) {
-    const a = numeric.sub(mouse_obj, points[i]);
-    const b = numeric.sub(points[i+1], points[i]);
+  let added_b;
+  for (let b = 0; b < beziers.length; b++) {
+    for (let i = 0; i < beziers[b].points.length - 1; i++ ) {
+      const v_a = numeric.sub(mouse_obj, beziers[b].points[i]);
+      const v_b = numeric.sub(beziers[b].points[i+1], beziers[b].points[i]);
 
-    const dot_product = numeric.dot(a, b);
-    const vec_length = numeric.div(dot_product, numeric.dot(b, b));
+      const dot_product = numeric.dot(v_a, v_b);
+      const vec_length = numeric.div(dot_product, numeric.dot(v_b, v_b));
 
-    if (vec_length > 1 || vec_length < 0) {
-    } else {
-      const vec_c = numeric.sub(numeric.mul(b, vec_length), a);
-      const dot = numeric.dot(vec_c, vec_c);
-      if (min_length_to_line > dot) {
-        min_length_to_line = dot;
-        nearest_to_line = i;
+      if (vec_length > 1 || vec_length < 0) {
+      } else {
+        const vec_c = numeric.sub(numeric.mul(v_b, vec_length), v_a);
+        const dot = numeric.dot(vec_c, vec_c);
+        if (min_length_to_line > dot) {
+          min_length_to_line = dot;
+          nearest_to_line = i;
+          added_b = b;
+        }
       }
     }
   }
 
-  points.splice(nearest_to_line + 1, 0, mouse_obj);
+  beziers[added_b].points.splice(nearest_to_line + 1, 0, mouse_obj);
   draw();
 };
+
+function newCurve (e) {
+  beziers.push(new Bezier());
+  const mouse_obj = getMousePos(right_click_mouse_pos).slice(0, 2);
+  beziers[beziers.length - 1].points.push(mouse_obj);
+  beziers[beziers.length - 1].points.push([mouse_obj[0] - 0.1, mouse_obj[1] - 0.1]);
+
+  draw();
+};
+
+function splitCurve (e) {
+  const cur_bez = beziers[nearest_bez_bezier];
+  const t = cur_bez.curve[nearest_bez_itr][1];
+
+  const new_p0 = cur_bez.deCas(cur_bez.points.length - 2, 0, t);
+  const new_p1 = cur_bez.deCas(cur_bez.points.length - 1, 1, t);
+
+  let new_bez_1 = new Bezier();
+  let new_bez_2 = new Bezier();
+  beziers.push(new_bez_1);
+  beziers.push(new_bez_2);
+
+  new_bez_2.points.push(nearest_bez_point);
+  for (let i = 0; i < cur_bez.points.length; i++) {
+    if (cur_bez.points[i] < cur_bez.points.length - 2) {
+      new_bez_1.points.push(cur_bez.points[i]);
+    } else if (cur_bez.points[i] > 1) {
+      new_bez_2.points.push(cur_bez.points[i])
+    }
+  }
+  new_bez_1.points.push(nearest_bez_point);
+  
+  beziers.splice(nearest_bez_bezier, 1);
+
+  draw();
+};
+
+// Combination
+function productRange (a,b) {
+  let prd = a;
+  let i = a;
+  while (i++< b) {
+    prd*=i;
+  }
+  return prd;
+}
+
+function combinations(n, r) {
+  if (n==r) {
+    return 1;
+  } else {
+    r=(r < n-r) ? n-r : r;
+    return productRange(r+1, n)/productRange(1,n-r);
+  }
+}
+
+function getMousePos (mouse_win) {
+  mouse_win.push(1);
+
+  let mouse_obj = glu.unproject(mouse_win, 
+    legacygl.uniforms.modelview.value,
+    legacygl.uniforms.projection.value,
+    [0, 0, canvas.width, canvas.height]);
+
+  // just reuse the same code as the 3D case
+  let plane_origin = [0, 0, 0];
+  let plane_normal = [0, 0, 1];
+  let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
+  let eye_to_origin = numeric.sub(plane_origin, camera.eye);
+  let s1 = numeric.dot(eye_to_mouse, plane_normal);
+  let s2 = numeric.dot(eye_to_origin, plane_normal);
+  return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+
+}
+
+function findNearestPoint (mouse_win) {
+  let viewport = [0, 0, canvas.width, canvas.height];
+  let dist_min = 10000000;
+  let nearest_itr;
+  let nearest_point;
+  let nearest_bezier;
+  for (let b = 0; b < beziers.length; b++) {
+    for (let i = 0; i < beziers[b].points.length; ++i) {
+      let object_win = glu.project([beziers[b].points[i][0], beziers[b].points[i][1], 0], 
+        legacygl.uniforms.modelview.value,
+        legacygl.uniforms.projection.value,
+        viewport);
+      let dist = vec2.dist(mouse_win, object_win);
+      if (dist < dist_min) {
+        dist_min = dist;
+        nearest_itr = i;
+        nearest_bezier = b;
+        nearest_point = beziers[b].points[i];
+      }
+    }
+  }
+
+  return [nearest_bezier, nearest_itr, nearest_point];
+}
+
+function findNearestCurve (mouse_win) {
+  let viewport = [0, 0, canvas.width, canvas.height];
+  let dist_min = 10000000;
+  let nearest_itr;
+  let nearest_point;
+  let nearest_bezier;
+  for (let b = 0; b < beziers.length; b++) {
+    for (let i = 0; i < beziers[b].curve.length; ++i) {
+      let object_win = glu.project([beziers[b].curve[i][0][0], beziers[b].curve[i][0][1], 0], 
+        legacygl.uniforms.modelview.value,
+        legacygl.uniforms.projection.value,
+        viewport);
+      let dist = vec2.dist(mouse_win, object_win);
+      if (dist < dist_min) {
+        dist_min = dist;
+        nearest_itr = i;
+        nearest_bezier = b;
+        nearest_point = beziers[b].curve[i][0];
+      }
+    }
+  }
+
+  return [nearest_bezier, nearest_itr, nearest_point];
+}
