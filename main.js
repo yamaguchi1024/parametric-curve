@@ -22,8 +22,6 @@ function eval_quadratic_bezier(p0, p1, p2, t) {
 }
 
 function draw() {
-  console.log(points);
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // projection & camera position
   mat4.perspective(legacygl.uniforms.projection.value, Math.PI / 6, canvas.aspect_ratio(), 0.1, 1000);
@@ -103,6 +101,29 @@ function getMousePos (mouse_win) {
 
 }
 
+function nearestPoint (excludePoints, mouse_win) {
+  let viewport = [0, 0, canvas.width, canvas.height];
+  let dist_min = 10000000;
+  let nearest;
+  for (let i = 0; i < points.length; ++i) {
+    if (excludePoints.includes(i)) {
+      continue;
+    }
+
+    let object_win = glu.project([points[i][0], points[i][1], 0], 
+      legacygl.uniforms.modelview.value,
+      legacygl.uniforms.projection.value,
+      viewport);
+    let dist = vec2.dist(mouse_win, object_win);
+    if (dist < dist_min) {
+      dist_min = dist;
+      nearest = i;
+    }
+  }
+
+  return nearest;
+}
+
 function init() {
   // OpenGL context
   canvas = document.getElementById("canvas");
@@ -140,14 +161,12 @@ function init() {
   camera.eye = [0, 0, 7];
 
   // ポイントたちを初期化
-
   points.push([-0.5, -0.6]);
   points.push([1.2, 0.5]);
-
   // points.push([-0.4, 1.3]);
   // points.push([-0.4, 1.0]);
 
-  // event handlers
+  // マウスが押された時
   canvas.onmousedown = function(evt) {
     // 右クリックの時に選択画面は出るけど点は動かないようにする
     if (evt.button === 0) {
@@ -159,29 +178,12 @@ function init() {
       camera.start_moving(mouse_win, evt.shiftKey ? "zoom" : "pan");
       return;
     }
-    // pick nearest object
-
-    let viewport = [0, 0, canvas.width, canvas.height];
-    let dist_min = 10000000;
-    for (let i = 0; i < points.length; ++i) {
-
-      let object_win = glu.project([points[i][0], points[i][1], 0], 
-        legacygl.uniforms.modelview.value,
-        legacygl.uniforms.projection.value,
-        viewport);
-      let dist = vec2.dist(mouse_win, object_win);
-      if (dist < dist_min) {
-        dist_min = dist;
-        selected = i;
-      }
-    }
   };
 
-  // Context Menu! Right click.
+  // 右クリックでcontext menu
   canvas.oncontextmenu = function (e){
     // 右クリックしたときのマウスの位置を取得
     right_click_mouse_pos = this.get_mousepos(e);
-    console.log(right_click_mouse_pos);
   };
 
   canvas.onmousemove = function(evt) {
@@ -192,13 +194,16 @@ function init() {
       return;
     }
 
+    // マウスを近くにするだけで、一番近い制御点がハイライトされるようにする
+    selected = nearestPoint([], mouse_win);
+
     if (ispointmove) {
       // マウスのポジションを取得するためのhelper function  
       let eye_to_intersection = getMousePos(mouse_win);
-
       vec2.copy(points[selected], numeric.add(camera.eye, eye_to_intersection));
-      draw();
     }
+
+    draw();
   }
 
   document.onmouseup = function (evt) {
@@ -215,13 +220,35 @@ function init() {
 };
 
 function deleteVertex (e) {
-  console.log(selected);
   points.splice(selected, 1);
   draw();
 };
 
 function addVertex (e) {
-  let mouse_obj = getMousePos(right_click_mouse_pos);
-  points.push(mouse_obj);
+  let mouse_obj = getMousePos(right_click_mouse_pos).slice(0, 2);
+
+  // マウスの位置と線の距離が一定以下の場合は、線上に制御点を追加する
+  // 一定以上の場合は、0とpoints.lengthの近い方にくっつける
+  let min_length_to_line = 1000000;
+  let nearest_to_line = 0;
+  for (let i = 0; i < points.length - 1; i++ ) {
+    const a = numeric.sub(mouse_obj, points[i]);
+    const b = numeric.sub(points[i+1], points[i]);
+
+    const dot_product = numeric.dot(a, b);
+    const vec_length = numeric.div(dot_product, numeric.dot(b, b));
+
+    if (vec_length > 1 || vec_length < 0) {
+    } else {
+      const vec_c = numeric.sub(numeric.mul(b, vec_length), a);
+      const dot = numeric.dot(vec_c, vec_c);
+      if (min_length_to_line > dot) {
+        min_length_to_line = dot;
+        nearest_to_line = i;
+      }
+    }
+  }
+
+  points.splice(nearest_to_line + 1, 0, mouse_obj);
   draw();
 };
