@@ -15,15 +15,15 @@
 <link rel="stylesheet" href="styles.css">
   
 <script type="text/javascript">
-var gl;
-var canvas;
-var legacygl;
-var drawutil;
-var camera;
-var p0, p1, p2;
-var selected = null;
-var delete_vertex = false;
-var right_click_mouse_pos;
+let gl;
+let canvas;
+let legacygl;
+let drawutil;
+let camera;
+let p0, p1, p2;
+let selected = null;
+let delete_vertex = false;
+let right_click_mouse_pos;
 
 function eval_quadratic_bezier(p0, p1, p2, t) {
     // return numeric.add(numeric.mul(1 - t, p0), numeric.mul(t, p2));     // TODO
@@ -36,7 +36,7 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // projection & camera position
     mat4.perspective(legacygl.uniforms.projection.value, Math.PI / 6, canvas.aspect_ratio(), 0.1, 1000);
-    var modelview = legacygl.uniforms.modelview;
+    let modelview = legacygl.uniforms.modelview;
     camera.lookAt(modelview.value);
     
     // xy grid
@@ -47,17 +47,17 @@ function draw() {
     // draw line segments composing curve
     legacygl.color(1, 0.6, 0.2);
     legacygl.begin(gl.LINE_STRIP);
-    var numsteps = Number(document.getElementById("input_numsteps").value);
-    for (var i = 0; i <= numsteps; ++i) {
-        var t = i / numsteps;
+    let numsteps = Number(document.getElementById("input_numsteps").value);
+    for (let i = 0; i <= numsteps; ++i) {
+        let t = i / numsteps;
         legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
     }
     legacygl.end();
     // draw sample points
     if (document.getElementById("input_show_samplepoints").checked) {
         legacygl.begin(gl.POINTS);
-        for (var i = 0; i <= numsteps; ++i) {
-            var t = i / numsteps;
+        for (let i = 0; i <= numsteps; ++i) {
+            let t = i / numsteps;
             legacygl.vertex2(eval_quadratic_bezier(p0, p1, p2, t));
         }
         legacygl.end();
@@ -85,10 +85,10 @@ function init() {
     gl = canvas.getContext("experimental-webgl");
     if (!gl)
         alert("Could not initialise WebGL, sorry :-(");
-    var vertex_shader_src = "\
+    let vertex_shader_src = "\
         attribute vec3 a_vertex;\
         attribute vec3 a_color;\
-        varying vec3 v_color;\
+        letying vec3 v_color;\
         uniform mat4 u_modelview;\
         uniform mat4 u_projection;\
         void main(void) {\
@@ -97,9 +97,9 @@ function init() {
             gl_PointSize = 5.0;\
         }\
         ";
-    var fragment_shader_src = "\
+    let fragment_shader_src = "\
         precision mediump float;\
-        varying vec3 v_color;\
+        letying vec3 v_color;\
         void main(void) {\
             gl_FragColor = vec4(v_color, 1.0);\
         }\
@@ -125,21 +125,21 @@ function init() {
           return;
         }
       
-        var mouse_win = this.get_mousepos(evt);
+        let mouse_win = this.get_mousepos(evt);
         if (evt.altKey) {
             camera.start_moving(mouse_win, evt.shiftKey ? "zoom" : "pan");
             return;
         }
         // pick nearest object
-        var points = [p0, p1, p2];
-        var viewport = [0, 0, canvas.width, canvas.height];
-        var dist_min = 10000000;
-        for (var i = 0; i < 3; ++i) {
-            var object_win = glu.project([points[i][0], points[i][1], 0], 
+        let points = [p0, p1, p2];
+        let viewport = [0, 0, canvas.width, canvas.height];
+        let dist_min = 10000000;
+        for (let i = 0; i < 3; ++i) {
+            let object_win = glu.project([points[i][0], points[i][1], 0], 
                                          legacygl.uniforms.modelview.value,
                                          legacygl.uniforms.projection.value,
                                          viewport);
-            var dist = vec2.dist(mouse_win, object_win);
+            let dist = vec2.dist(mouse_win, object_win);
             if (dist < dist_min) {
                 dist_min = dist;
                 selected = points[i];
@@ -155,27 +155,27 @@ function init() {
     
 
     canvas.onmousemove = function(evt) {
-        var mouse_win = this.get_mousepos(evt);
+        let mouse_win = this.get_mousepos(evt);
         if (camera.is_moving()) {
             camera.move(mouse_win);
             draw();
             return;
         }
         if (selected != null) {
-            var viewport = [0, 0, canvas.width, canvas.height];
+            let viewport = [0, 0, canvas.width, canvas.height];
             mouse_win.push(1);
-            var mouse_obj = glu.unproject(mouse_win, 
+            let mouse_obj = glu.unproject(mouse_win, 
                                           legacygl.uniforms.modelview.value,
                                           legacygl.uniforms.projection.value,
                                           viewport);
             // just reuse the same code as the 3D case
-            var plane_origin = [0, 0, 0];
-            var plane_normal = [0, 0, 1];
-            var eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
-            var eye_to_origin = numeric.sub(plane_origin, camera.eye);
-            var s1 = numeric.dot(eye_to_mouse, plane_normal);
-            var s2 = numeric.dot(eye_to_origin, plane_normal);
-            var eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+            let plane_origin = [0, 0, 0];
+            let plane_normal = [0, 0, 1];
+            let eye_to_mouse = numeric.sub(mouse_obj, camera.eye);
+            let eye_to_origin = numeric.sub(plane_origin, camera.eye);
+            let s1 = numeric.dot(eye_to_mouse, plane_normal);
+            let s2 = numeric.dot(eye_to_origin, plane_normal);
+            let eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
             vec2.copy(selected, numeric.add(camera.eye, eye_to_intersection));
             draw();
         }
