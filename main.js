@@ -80,6 +80,7 @@ function draw() {
 
 function getMousePos (mouse_win) {
   mouse_win.push(1);
+
   let mouse_obj = glu.unproject(mouse_win, 
     legacygl.uniforms.modelview.value,
     legacygl.uniforms.projection.value,
@@ -94,6 +95,7 @@ function getMousePos (mouse_win) {
       let s1 = numeric.dot(eye_to_mouse, plane_normal);
       let s2 = numeric.dot(eye_to_origin, plane_normal);
       return eye_to_intersection = numeric.mul(s2 / s1, eye_to_mouse);
+
 }
 
 function init() {
@@ -133,8 +135,10 @@ function init() {
   camera.eye = [0, 0, 7];
 
   // ポイントたちを初期化
+
   points.push([-0.5, -0.6]);
   points.push([1.2, 0.5]);
+
   // points.push([-0.4, 1.3]);
   // points.push([-0.4, 1.0]);
 
@@ -185,8 +189,9 @@ function init() {
 
     if (ispointmove) {
       // マウスのポジションを取得するためのhelper function  
+
       let eye_to_intersection = getMousePos(mouse_win);
- 
+
       vec2.copy(points[selected], numeric.add(camera.eye, eye_to_intersection));
       draw();
     }
