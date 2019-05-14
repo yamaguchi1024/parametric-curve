@@ -54,6 +54,25 @@ class Bezier {
   }
 }
 
+function calc_percent(bez_temp, numsteps) {
+  percent = []
+  for (let i = 1; i <= numsteps - 1; ++i) {
+    const a = bez_temp[i-1][0];
+    const b = bez_temp[i][0];
+    const c = bez_temp[i+1][0];
+
+    const ab = Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
+    const ac = Math.sqrt(Math.pow(a[0] - c[0], 2) + Math.pow(a[1] - c[1], 2));
+    const bc = Math.sqrt(Math.pow(b[0] - c[0], 2) + Math.pow(b[1] - c[1], 2));
+
+    const t = numeric.dot(numeric.sub(a, b), numeric.sub(c, b));
+    const cos = t / (bc * ab);
+
+    percent.push(-Math.acos(cos));
+  }
+  return percent;
+}
+
 function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // projection & camera position
@@ -73,12 +92,39 @@ function draw() {
   // draw line segments composing curve
   legacygl.color(1, 0.6, 0.2);
   let numsteps = Number(document.getElementById("input_numsteps").value);
-  for (let b = 0; b < beziers.length; b++) {
+  for (let bez = 0; bez < beziers.length; bez++) {
     legacygl.begin(gl.LINE_STRIP);
+
+    bez_temp = []
     for (let i = 0; i <= numsteps; ++i) {
       let t = i / numsteps;
-      beziers[b].curve.push([beziers[b].eval_quadratic_bezier(t), t]);
-      legacygl.vertex2(beziers[b].curve[i][0]);
+      const point = beziers[bez].eval_quadratic_bezier(t);
+      bez_temp.push([point, t]);
+    }
+
+    // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
+    // それが一定以上だったらadaptiveにtを追加する。
+    for (let i = 0; i < 100; i++) {
+      let percent = calc_percent(bez_temp, numsteps);
+
+      const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
+
+      // 曲率が高い点にtを追加
+      const new_t_1 = (2*(bez_temp[max_index - 1][1]) + bez_temp[max_index + 1][1]) / 3;
+      const new_t_2 = (bez_temp[max_index - 1][1] + 2*(bez_temp[max_index + 1][1])) / 3;
+      const new_point_1 = beziers[bez].eval_quadratic_bezier(new_t_1);
+      const new_point_2 = beziers[bez].eval_quadratic_bezier(new_t_2);
+      bez_temp.splice(max_index, 1, [new_point_1, new_t_1], [new_point_2, new_t_2]);
+
+      percent = calc_percent(bez_temp, numsteps+1);
+      let min = percent.indexOf(Math.min.apply(null, percent)) + 1;
+      // 曲率が低い点を削除
+      bez_temp.splice(min, 1);
+    }
+
+    for (let i = 0; i <= numsteps; ++i) {
+      beziers[bez].curve.push(bez_temp[i]);
+      legacygl.vertex2(beziers[bez].curve[i][0]);
     }
     legacygl.end();
   }
