@@ -102,24 +102,27 @@ function draw() {
       bez_temp.push([point, t]);
     }
 
-    // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
-    // それが一定以上だったらadaptiveにtを追加する。
-    for (let i = 0; i < 100; i++) {
-      let percent = calc_percent(bez_temp, numsteps);
+    // Adaptive samplingがオンになっていたら
+    if (document.getElementById("input_adaptive_sampling").checked) {
+      // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
+      // それが一定以上だったらadaptiveにtを追加する。
+      for (let i = 0; i < 100; i++) {
+        let percent = calc_percent(bez_temp, numsteps);
 
-      const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
+        const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
 
-      // 曲率が高い点にtを追加
-      const new_t_1 = (2*(bez_temp[max_index - 1][1]) + bez_temp[max_index + 1][1]) / 3;
-      const new_t_2 = (bez_temp[max_index - 1][1] + 2*(bez_temp[max_index + 1][1])) / 3;
-      const new_point_1 = beziers[bez].eval_quadratic_bezier(new_t_1);
-      const new_point_2 = beziers[bez].eval_quadratic_bezier(new_t_2);
-      bez_temp.splice(max_index, 1, [new_point_1, new_t_1], [new_point_2, new_t_2]);
+        // 曲率が高い点にtを追加
+        const new_t_1 = (2*(bez_temp[max_index - 1][1]) + bez_temp[max_index + 1][1]) / 3;
+        const new_t_2 = (bez_temp[max_index - 1][1] + 2*(bez_temp[max_index + 1][1])) / 3;
+        const new_point_1 = beziers[bez].eval_quadratic_bezier(new_t_1);
+        const new_point_2 = beziers[bez].eval_quadratic_bezier(new_t_2);
+        bez_temp.splice(max_index, 1, [new_point_1, new_t_1], [new_point_2, new_t_2]);
 
-      percent = calc_percent(bez_temp, numsteps+1);
-      let min = percent.indexOf(Math.min.apply(null, percent)) + 1;
-      // 曲率が低い点を削除
-      bez_temp.splice(min, 1);
+        percent = calc_percent(bez_temp, numsteps+1);
+        let min = percent.indexOf(Math.min.apply(null, percent)) + 1;
+        // 曲率が低い点を削除
+        bez_temp.splice(min, 1);
+      }
     }
 
     for (let i = 0; i <= numsteps; ++i) {
