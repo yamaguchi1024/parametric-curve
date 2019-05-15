@@ -97,7 +97,32 @@ function draw() {
   let mul = numeric.mul;
   let add = numeric.add;
   let sub = numeric.sub;
-  if (document.getElementById("input_bsp_2").checked) {
+  if (document.getElementById("input_bsp_3").checked) {
+    // 3次元Bスプライン
+    for (let c = 0; c < curves.length; c++) {
+      legacygl.begin(gl.LINE_STRIP);
+      let num_points = curves[c].points.length;
+
+      for (let i = 3; i < num_points; i++) {
+        let p0 = curves[c].points[i - 3];
+        let p1 = curves[c].points[i - 2];
+        let p2 = curves[c].points[i - 1];
+        let p3 = curves[c].points[i];
+
+        for (let j = 0; j <= numsteps; ++j) {
+          let t = j / numsteps;
+
+          let point0 = add(mul(1/6*Math.pow(1-t,3), p0), mul((1/2*Math.pow(t,3) + Math.pow(t,2) + 2/3), p1));
+          let point1 = add(mul(-1/2*Math.pow(t,3) + 1/2*Math.pow(t,2) + 1/2*t + 1/6, p2), mul(1/6*Math.pow(t,3), p3));
+          let point = add(point0, point1);
+
+          curves[c].curve.push(point);
+          legacygl.vertex2(point);
+        }
+      }
+      legacygl.end();
+    }
+  } else if (document.getElementById("input_bsp_2").checked) {
     // 二次元Bスプライン
     for (let c = 0; c < curves.length; c++) {
       legacygl.begin(gl.LINE_STRIP);
