@@ -103,22 +103,29 @@ function draw() {
       legacygl.begin(gl.LINE_STRIP);
       let num_points = curves[c].points.length;
 
-      for (let i = 3; i < num_points; i++) {
+      for (let tt = 3.0; tt < num_points; tt+=0.001) {
+        const i = Math.floor(tt);
+        const t = tt - i;
         let p0 = curves[c].points[i - 3];
         let p1 = curves[c].points[i - 2];
         let p2 = curves[c].points[i - 1];
         let p3 = curves[c].points[i];
 
-        for (let j = 0; j <= numsteps; ++j) {
-          let t = j / numsteps;
+        let point = [0,0];
 
-          let point0 = add(mul(1/6*Math.pow(1-t,3), p0), mul((1/2*Math.pow(t,3) + Math.pow(t,2) + 2/3), p1));
-          let point1 = add(mul(-1/2*Math.pow(t,3) + 1/2*Math.pow(t,2) + 1/2*t + 1/6, p2), mul(1/6*Math.pow(t,3), p3));
-          let point = add(point0, point1);
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const mt3 = (1 - t) * (1 - t) * (1 - t);
 
-          curves[c].curve.push(point);
-          legacygl.vertex2(point);
-        }
+        const bi3 = mt3 / 6;
+        const bi2 = ((3 * t3) - (6 * t2) + 4) / 6;
+        const bi1 = ((-3 * t3) + (3 * t2) + (3 * t) + 1) / 6;
+        const bi  = t3 / 6;
+
+        point = add(add(mul(p0, bi3), mul(p1, bi2)), add(mul(p2, bi1), mul(p3, bi)));
+
+        curves[c].curve.push(point);
+        legacygl.vertex2(point);
       }
       legacygl.end();
     }
@@ -128,19 +135,17 @@ function draw() {
       legacygl.begin(gl.LINE_STRIP);
       let num_points = curves[c].points.length;
 
-      for (let i = 2; i < num_points; i++) {
+      for (let tt = 3.0; tt < num_points; tt+=0.001) {
+        const i = Math.floor(tt);
+        const t = tt - i;
         let p0 = curves[c].points[i - 2];
         let p1 = curves[c].points[i - 1];
         let p2 = curves[c].points[i];
 
-        for (let j = 0; j <= numsteps; ++j) {
-          let t = j / numsteps;
+        let point = add(add(mul(1/2, mul(add(Math.pow(t,2), add(mul(-2, t), 1)), p0)), mul(1/2, mul(p1, add(add(mul(-2, Math.pow(t,2)), mul(2, t)) , 1)))), mul(1/2, mul(p2, Math.pow(t,2))));
 
-          let point = add(add(mul(1/2, mul(add(Math.pow(t,2), add(mul(-2, t), 1)), p0)), mul(1/2, mul(p1, add(add(mul(-2, Math.pow(t,2)), mul(2, t)) , 1)))), mul(1/2, mul(p2, Math.pow(t,2))));
-
-          curves[c].curve.push(point);
-          legacygl.vertex2(point);
-        }
+        curves[c].curve.push(point);
+        legacygl.vertex2(point);
       }
     }
     legacygl.end();
