@@ -103,10 +103,11 @@ function draw() {
     }
 
     // Adaptive samplingがオンになっていたら
+    const as_steps = Number(document.getElementById("input_as_steps").value);
     if (document.getElementById("input_adaptive_sampling").checked) {
       // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
       // それが一定以上だったらadaptiveにtを追加する。
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < as_steps; i++) {
         let percent = calc_percent(bez_temp, numsteps);
 
         const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
