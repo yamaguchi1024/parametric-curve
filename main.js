@@ -194,7 +194,7 @@ function draw() {
 
       legacygl.end();
     }
-  } else {
+  } else if (document.getElementById("input_bezier").checked) {
     // Bezier curve!
     for (let bez = 0; bez < curves.length; bez++) {
       legacygl.begin(gl.LINE_STRIP);

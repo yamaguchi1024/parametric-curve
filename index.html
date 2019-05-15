@@ -32,26 +32,18 @@
         <canvas id="canvas" contextmenu="menu-id" width="640" height="480" style="border:1px solid #000000"></canvas>
 
         <table>
-          <tr>
-            <td>B Spline 3rd order:</td>
-            <td colspan="2"><input type="checkbox" id="input_bsp_3" onchange="draw();" checked></td>
-          </tr>
-          <tr>
-            <td>B Spline 2nd order:</td>
-            <td colspan="2"><input type="checkbox" id="input_bsp_2" onchange="draw();" checked></td>
-          </tr>
-          <tr>
-            <td>Catmull Rom:</td>
-            <td colspan="2"><input type="checkbox" id="input_catmull_rom" onchange="draw();" checked></td>
-          </tr>
-          <tr>
-            <td>Adaptive Sampling:</td>
-            <td colspan="2"><input type="checkbox" id="input_adaptive_sampling" onchange="draw();" checked></td>
-          </tr>
-          <tr>
-            <td>Number of Adaptive Sampling iteration:</td>
-            <td colspan="2"><input type="number" id="input_as_steps" onchange="draw();" step="1" min="10" value="100"></td>
-          </tr>
+          <h3>Select a curve algorithm:</h3>
+          <ul style="list-style: none;">
+            <li><input type="radio" name="curve" id="input_bsp_3" onchange="draw();">B Spline 3rd order</li>
+            <li><input type="radio" name="curve" id="input_bsp_2" onchange="draw();">B Spline 2nd order</li>
+            <li><input type="radio" name="curve" id="input_catmull_rom" onchange="draw();">Catmull Rom</li>
+            <li><input type="radio" name="curve" id="input_bezier" onchange="draw();" checked>Bezier</li>
+            <ul>
+              <li><input type="checkbox" id="input_adaptive_sampling" onchange="draw();" checked>Adaptive Sampling</li>
+              <li>Number of Adaptive Sampling iteration: <input type="number" id="input_as_steps" onchange="draw();" step="1" min="10" value="100"></li>
+            </ul>
+          </ul>
+
           <tr>
             <td>Number of Steps:</td>
             <td colspan="2"><input type="number" id="input_numsteps" onchange="draw();" step="1" min="2" value="20"></td>
