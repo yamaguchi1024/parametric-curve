@@ -204,6 +204,7 @@ function draw() {
     for (let bez = 0; bez < curves.length; bez++) {
       legacygl.begin(gl.LINE_STRIP);
 
+      console.log(curves[bez].points);
       bez_temp = []
       for (let i = 0; i <= numsteps; ++i) {
         let t = i / numsteps;
@@ -213,7 +214,8 @@ function draw() {
 
       // Adaptive samplingがオンになっていたら
       const as_steps = Number(document.getElementById("input_as_steps").value);
-      if (document.getElementById("input_adaptive_sampling").checked) {
+      // There is no curvature for a line
+      if (curves[bez].points.length > 3 && document.getElementById("input_adaptive_sampling").checked) {
         // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
         // それが一定以上だったらadaptiveにtを追加する。
         for (let i = 0; i < as_steps; i++) {
