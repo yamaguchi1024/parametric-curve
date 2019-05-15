@@ -50,6 +50,11 @@ function newCurve (e) {
 };
 
 function splitCurve (e) {
+  if (!document.getElementById("input_bezier").checked) {
+    alert("Only supported for Bezier curves!");
+    return;
+  }
+
   const cur_bez = curves[nearest_bez_bezier];
   const t = cur_bez.curve[nearest_bez_itr][1];
 
