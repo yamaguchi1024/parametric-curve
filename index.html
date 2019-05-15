@@ -45,14 +45,14 @@
               <tr>
                 <h3>Select a curve algorithm:</h3>
                 <ul style="list-style: none;">
-                  <li><input type="radio" name="curve" id="input_bsp_3" onchange="draw();">B Spline 3rd order</li>
-                  <li><input type="radio" name="curve" id="input_bsp_2" onchange="draw();">B Spline 2nd order</li>
-                  <li><input type="radio" name="curve" id="input_catmull_rom" onchange="draw();">Catmull Rom</li>
                   <li><input type="radio" name="curve" id="input_bezier" onchange="draw();" checked>Bezier</li>
                   <ul>
                     <li><input type="checkbox" id="input_adaptive_sampling" onchange="draw();" checked>Adaptive Sampling</li>
                     <li>Number of Adaptive Sampling iteration: <input type="number" id="input_as_steps" onchange="draw();" step="1" min="10" value="100"></li>
                   </ul>
+                  <li><input type="radio" name="curve" id="input_bsp_3" onchange="draw();">B Spline 3rd order</li>
+                  <li><input type="radio" name="curve" id="input_bsp_2" onchange="draw();">B Spline 2nd order</li>
+                  <li><input type="radio" name="curve" id="input_catmull_rom" onchange="draw();">Catmull Rom</li>
                 </ul>
               </tr>
 
@@ -91,16 +91,57 @@
 
         <h3> Creative points:</h3>
         <ul>
-          <li>Impelement secondly Bezier curve. Implementation in main.js line TODO.</li>
-          <li>Implement a context menu, you can click right button or F12 on WebGL canvas.</li>
-          <li>Implement a Bezier curve with general n points, using De Castro's algorithm</li>
-          <li>Add and delete points by clicking right butotn in the canvas.</li>
-          <li>Change the color of the point which is closest to the current mouse point and selected points</li>
-          <li>Change the color of the closest points as mouse moves</li>
-          <li>Calculate the distance between mouse and the line, add a cotrol point to the closest line</li>
-          <li>Allow having two or more Bezier curves. It can be created via right click menu, and can be deleted by deleting all control points of the Bezier curve</li>
-          <li>Implement the division of Bezier curves. It can be tested by right click menu.</li>
-          <li>Implement the adaptive sampling of t. Calculate the uniform t sampling first, and calculate the curvature for each triangle. Add a new point to the point which has the biggest curvature, and delete the point which has a minimal curvature. Iterate this process 1000 times. (can be changed from index.html button)</li>
+          <li>Tidy the canvas</li>
+          <ul>
+            <li>A right-click context menu</li>
+            <ul>
+              <li>You can click right button on WebGL canvas to open context menu.</li>
+            </ul>
+            <li>Change the color of the control point which is closest to the current mouse location. (main-utils: findNearestPoint)</li>
+            <li>Change the color of the closest curve points as mouse moves. (main-utils: findNearestCurve)</li>
+          </ul>
+          <li>Secondly Bezier curve</li>
+          <ul>
+            <li>The implementation is at main.js line 49-51.</li>
+            <li>Nothing special, it only works for three control points.</li>
+          </ul>
+          <li>A Bezier curve in general with n points</li>
+          <ul>
+            <li>Implemented a Bezier curve which can handle n points, using De Castro's algorithm.</li>
+            <li>The implementation is at main.js line 35-54.</li>
+          </ul>
+          <li>Add and delete vertices</li>
+          <ul>
+            <li>Point a mouse to the vertex you want to delete, and then click the right button in the canvas.</li>
+            <li>It calculates the distance between mouse and control lines, and add a cotrol point to the closest line</li>
+            <li>The implementation is at main-events.js line 1-30.</li>
+          </ul>
+          <li>Multiple Curves</li>
+          <ul>
+            <li>Allow having two or more curves. They can be created via right click menu, and also be deleted by deleting all control points of the Bezier curve.</li>
+            <li>The implementation is at main-events.js line 1-30.</li>
+          </ul>
+          <li>Split of Bezier curves</li>
+          <ul>
+            <li>It can be accessed by right click menu.</li>
+            <li>The implementation is at main-events.js line 52-77.</li>
+          </ul>
+          <li>Adaptive sampling for Bezier curves</li>
+          <ul>
+            <li>Calculate the uniform t sampling first, and calculate the curvature for each triangle. Add a new point to the point which has the biggest curvature, and delete the point which has a minimal curvature. Iterate this process 100 times, which can be modified via "Number of Adaptive Sampling iteration" input in html.</li>
+            <li>The implementation is at main.js line 215-238.</li>
+          </ul>
+          <li>Catmull Rom Spline</li>
+          <ul>
+            <li>We have to support the first and the last point separately from the others, as they don't have previous/next points.</li>
+            <li>The implementation is at main.js line 152-201.</li>
+          </ul>
+          <li>B Spline</li>
+          <ul>
+            <li>I implemented two B splines, a 3rd order and a 2nd order.</li>
+            <li>They look a bit ugly on 顔文字 example as it has few control points and B splines don't intersect with a control point. But it will start to look good if you add more vertices to the canvas.</li>
+            <li>The implementation is at main.js line 100-151.</li>
+          </ul>
         </ul>
 
         <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>
