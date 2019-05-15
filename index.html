@@ -16,6 +16,12 @@
     <script src="main.js"></script>
     <script src="main-utils.js"></script>
     <script src="main-events.js"></script>
+
+    <style>
+.flex-container {
+  display: flex;
+}
+    </style>
   </head>
 
   <body onload="init(); draw();">
@@ -29,41 +35,59 @@
           <menuitem label="Split Curve" onclick="splitCurve(event);"></menuitem>
         </menu>
 
-        <canvas id="canvas" contextmenu="menu-id" width="640" height="480" style="border:1px solid #000000"></canvas>
-
         <table>
-          <h3>Select a curve algorithm:</h3>
-          <ul style="list-style: none;">
-            <li><input type="radio" name="curve" id="input_bsp_3" onchange="draw();">B Spline 3rd order</li>
-            <li><input type="radio" name="curve" id="input_bsp_2" onchange="draw();">B Spline 2nd order</li>
-            <li><input type="radio" name="curve" id="input_catmull_rom" onchange="draw();">Catmull Rom</li>
-            <li><input type="radio" name="curve" id="input_bezier" onchange="draw();" checked>Bezier</li>
-            <ul>
-              <li><input type="checkbox" id="input_adaptive_sampling" onchange="draw();" checked>Adaptive Sampling</li>
-              <li>Number of Adaptive Sampling iteration: <input type="number" id="input_as_steps" onchange="draw();" step="1" min="10" value="100"></li>
-            </ul>
-          </ul>
+          <td>
+            <canvas id="canvas" contextmenu="menu-id" width="640" height="480" style="border:1px solid #000000"></canvas>
+          </td>
 
-          <tr>
-            <td>Number of Steps:</td>
-            <td colspan="2"><input type="number" id="input_numsteps" onchange="draw();" step="1" min="2" value="20"></td>
-          </tr>
-          <tr>
-            <td>Show Control Points:</td>
-            <td colspan="2"><input type="checkbox" id="input_show_controlpoints" onchange="draw();" checked></td>
-          </tr>
-          <tr>
-            <td>Show Sample Points:</td>
-            <td colspan="2"><input type="checkbox" id="input_show_samplepoints" onchange="draw();" checked></td>
-          </tr>
+          <td>
+            <table>
+              <tr>
+                <h3>Select a curve algorithm:</h3>
+                <ul style="list-style: none;">
+                  <li><input type="radio" name="curve" id="input_bsp_3" onchange="draw();">B Spline 3rd order</li>
+                  <li><input type="radio" name="curve" id="input_bsp_2" onchange="draw();">B Spline 2nd order</li>
+                  <li><input type="radio" name="curve" id="input_catmull_rom" onchange="draw();">Catmull Rom</li>
+                  <li><input type="radio" name="curve" id="input_bezier" onchange="draw();" checked>Bezier</li>
+                  <ul>
+                    <li><input type="checkbox" id="input_adaptive_sampling" onchange="draw();" checked>Adaptive Sampling</li>
+                    <li>Number of Adaptive Sampling iteration: <input type="number" id="input_as_steps" onchange="draw();" step="1" min="10" value="100"></li>
+                  </ul>
+                </ul>
+              </tr>
+
+              <tr>
+                <td>Number of Steps:</td>
+                <td colspan="2"><input type="number" id="input_numsteps" onchange="draw();" step="1" min="2" value="20"></td>
+              </tr>
+              <tr>
+                <td>Show Control Points:</td>
+                <td colspan="2"><input type="checkbox" id="input_show_controlpoints" onchange="draw();" checked></td>
+              </tr>
+              <tr>
+                <td>Show Sample Points:</td>
+                <td colspan="2"><input type="checkbox" id="input_show_samplepoints" onchange="draw();" checked></td>
+              </tr>
+
+              <tr>
+                <h3>Usage:</h3>
+                <ul>
+                  <li>Drag: Move Control Points</li>
+                  <li>Alt+Drag: Camera Pan</li>
+                  <li>Alt+Shift+drag: Camera Zoom</li>
+                  <li>Right Click:
+                    <ul>
+                      <li>Add a new Vertex</li>
+                      <li>Delete new Vertex</li>
+                      <li>Add a new curve</li>
+                      <li>Split Bezier curve</li>
+                    </ul>
+                </ul>
+              </tr>
+
+            </table>
+          </td>
         </table>
-
-        <h3>Usage:</h3>
-        <ul>
-          <li>Drag: Move Control Points</li>
-          <li>Alt+Drag: Camera Pan</li>
-          <li>Alt+Shift+drag: Camera Zoom</li>
-        </ul>
 
         <h3> Creative points:</h3>
         <ul>
