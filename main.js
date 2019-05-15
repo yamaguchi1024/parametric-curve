@@ -94,11 +94,33 @@ function draw() {
   legacygl.color(1, 0.6, 0.2);
   let numsteps = Number(document.getElementById("input_numsteps").value);
 
-  if (document.getElementById("input_catmull_rom").checked) {
+  let mul = numeric.mul;
+  let add = numeric.add;
+  let sub = numeric.sub;
+  if (document.getElementById("input_bsp_2").checked) {
+    // 二次元Bスプライン
+    for (let c = 0; c < curves.length; c++) {
+      legacygl.begin(gl.LINE_STRIP);
+      let num_points = curves[c].points.length;
+
+      for (let i = 2; i < num_points; i++) {
+        let p0 = curves[c].points[i - 2];
+        let p1 = curves[c].points[i - 1];
+        let p2 = curves[c].points[i];
+
+        for (let j = 0; j <= numsteps; ++j) {
+          let t = j / numsteps;
+
+          let point = add(add(mul(1/2, mul(add(Math.pow(t,2), add(mul(-2, t), 1)), p0)), mul(1/2, mul(p1, add(add(mul(-2, Math.pow(t,2)), mul(2, t)) , 1)))), mul(1/2, mul(p2, Math.pow(t,2))));
+
+          curves[c].curve.push(point);
+          legacygl.vertex2(point);
+        }
+      }
+    }
+    legacygl.end();
+  } else if (document.getElementById("input_catmull_rom").checked) {
     // Catmull Rom
-    let mul = numeric.mul;
-    let add = numeric.add;
-    let sub = numeric.sub;
     for (let c = 0; c < curves.length; c++) {
       legacygl.begin(gl.LINE_STRIP);
       let num_points = curves[c].points.length;
