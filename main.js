@@ -4,8 +4,8 @@ let legacygl;
 let drawutil;
 let camera;
 
-// 画面上にあるBezierのインスタンス
-let beziers = [];
+// 画面上にあるCurveのインスタンス
+let curves = [];
 // 本当にselected
 let selected_cont_itr;
 let selected_cont_point;
@@ -25,13 +25,14 @@ let mouse_move_pos;
 // ポイントが動くモードに入っているか
 let ispointmove = false;
 
-class Bezier {
+class Curve {
   constructor () {
     this.points = [];
     // カーブを分割するt
     this.curve = [];
   }
 
+  // Used for Bezier curve
   deCas (i, j, t) {
     if (i === 0) {
       return this.points[j];
@@ -85,66 +86,123 @@ function draw() {
   legacygl.color(0.5, 0.5, 0.5);
   drawutil.xygrid(100);
 
-  for (let b = 0; b < beziers.length; b++) {
-    beziers[b].curve = [];
+  for (let b = 0; b < curves.length; b++) {
+    curves[b].curve = [];
   }
 
   // draw line segments composing curve
   legacygl.color(1, 0.6, 0.2);
   let numsteps = Number(document.getElementById("input_numsteps").value);
-  for (let bez = 0; bez < beziers.length; bez++) {
-    legacygl.begin(gl.LINE_STRIP);
 
-    bez_temp = []
-    for (let i = 0; i <= numsteps; ++i) {
-      let t = i / numsteps;
-      const point = beziers[bez].eval_quadratic_bezier(t);
-      bez_temp.push([point, t]);
-    }
+  if (document.getElementById("input_catmull_rom").checked) {
+    // Catmull Rom
+    let mul = numeric.mul;
+    let add = numeric.add;
+    let sub = numeric.sub;
+    for (let c = 0; c < curves.length; c++) {
+      legacygl.begin(gl.LINE_STRIP);
+      let num_points = curves[c].points.length;
 
-    // Adaptive samplingがオンになっていたら
-    const as_steps = Number(document.getElementById("input_as_steps").value);
-    if (document.getElementById("input_adaptive_sampling").checked) {
-      // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
-      // それが一定以上だったらadaptiveにtを追加する。
-      for (let i = 0; i < as_steps; i++) {
-        let percent = calc_percent(bez_temp, numsteps);
+      for (let j = 0; j <= numsteps; ++j) {
+        let t = j / numsteps;
 
-        const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
-
-        // 曲率が高い点にtを追加
-        const new_t_1 = (2*(bez_temp[max_index - 1][1]) + bez_temp[max_index + 1][1]) / 3;
-        const new_t_2 = (bez_temp[max_index - 1][1] + 2*(bez_temp[max_index + 1][1])) / 3;
-        const new_point_1 = beziers[bez].eval_quadratic_bezier(new_t_1);
-        const new_point_2 = beziers[bez].eval_quadratic_bezier(new_t_2);
-        bez_temp.splice(max_index, 1, [new_point_1, new_t_1], [new_point_2, new_t_2]);
-
-        percent = calc_percent(bez_temp, numsteps+1);
-        let min = percent.indexOf(Math.min.apply(null, percent)) + 1;
-        // 曲率が低い点を削除
-        bez_temp.splice(min, 1);
+        // 始点
+        let p0 = curves[c].points[0];
+        let p1 = curves[c].points[1];
+        let p2 = curves[c].points[2];
+        let point_first = mul(1/2, add(mul(add(p0, add(mul(-2, p1), p2)), Math.pow(t,2)), add(mul(add(mul(-3, p0), add(mul(4, p1), mul(-1, p2))), t), mul(2, p0))));
+        curves[c].curve.push(point_first);
+        legacygl.vertex2(point_first);
       }
-    }
 
-    for (let i = 0; i <= numsteps; ++i) {
-      beziers[bez].curve.push(bez_temp[i]);
-      legacygl.vertex2(beziers[bez].curve[i][0]);
+      // それ以外の点
+      for (let i = 3; i < num_points; i++) {
+        for (let j = 0; j <= numsteps; ++j) {
+          let t = j / numsteps;
+          let p0 = curves[c].points[i - 3];
+          let p1 = curves[c].points[i - 2];
+          let p2 = curves[c].points[i - 1];
+          let p3 = curves[c].points[i];
+
+          let eval_cat0 = mul(mul(1/2, (add(add(mul(-1, p0), mul(3, p1)), add(mul(-3, p2), p3)))), Math.pow(t,3));
+          let eval_cat1 = mul(mul(1/2, (add(add(mul(2, p0), mul(-5, p1)), add(mul(4, p2), mul(-1, p3))))), Math.pow(t,2));
+          let eval_cat2 = mul(t, mul(1/2, add(mul(-1, p0), p2)));
+          let point = add(add(eval_cat0, eval_cat1), add(eval_cat2, p1));
+
+          curves[c].curve.push(point);
+          legacygl.vertex2(point);
+        }
+      }
+
+      // 終点
+      p0 = curves[c].points[num_points - 3];
+      p1 = curves[c].points[num_points - 2];
+      p2 = curves[c].points[num_points - 1];
+      for (let j = 0; j <= numsteps; ++j) {
+        let t = j / numsteps;
+        let point_last = mul(1/2, add(mul(add(p0, add(mul(-2, p1), p2)), Math.pow(t,2)), add(mul(add(mul(-1, p0), p2), t), mul(2, p1))));
+        curves[c].curve.push(point_last);
+        legacygl.vertex2(point_last);
+      }
+
+      legacygl.end();
     }
-    legacygl.end();
+  } else {
+    // Bezier curve!
+    for (let bez = 0; bez < curves.length; bez++) {
+      legacygl.begin(gl.LINE_STRIP);
+
+      bez_temp = []
+      for (let i = 0; i <= numsteps; ++i) {
+        let t = i / numsteps;
+        const point = curves[bez].eval_quadratic_bezier(t);
+        bez_temp.push([point, t]);
+      }
+
+      // Adaptive samplingがオンになっていたら
+      const as_steps = Number(document.getElementById("input_as_steps").value);
+      if (document.getElementById("input_adaptive_sampling").checked) {
+        // a, b, cという三角形でbが中点だと考える。中点から底辺への高さと底辺の比を考え、
+        // それが一定以上だったらadaptiveにtを追加する。
+        for (let i = 0; i < as_steps; i++) {
+          let percent = calc_percent(bez_temp, numsteps);
+
+          const max_index = percent.indexOf(Math.max.apply(null, percent)) + 1;
+
+          // 曲率が高い点にtを追加
+          const new_t_1 = (2*(bez_temp[max_index - 1][1]) + bez_temp[max_index + 1][1]) / 3;
+          const new_t_2 = (bez_temp[max_index - 1][1] + 2*(bez_temp[max_index + 1][1])) / 3;
+          const new_point_1 = curves[bez].eval_quadratic_bezier(new_t_1);
+          const new_point_2 = curves[bez].eval_quadratic_bezier(new_t_2);
+          bez_temp.splice(max_index, 1, [new_point_1, new_t_1], [new_point_2, new_t_2]);
+
+          percent = calc_percent(bez_temp, numsteps+1);
+          let min = percent.indexOf(Math.min.apply(null, percent)) + 1;
+          // 曲率が低い点を削除
+          bez_temp.splice(min, 1);
+        }
+      }
+
+      for (let i = 0; i <= numsteps; ++i) {
+        curves[bez].curve.push(bez_temp[i][0]);
+        legacygl.vertex2(curves[bez].curve[i]);
+      }
+      legacygl.end();
+    }
   }
 
   // draw sample points
   if (document.getElementById("input_show_samplepoints").checked) {
-    for (let b = 0; b < beziers.length; b++) {
+    for (let b = 0; b < curves.length; b++) {
       legacygl.begin(gl.POINTS);
-      for (let i = 0; i <= numsteps; ++i) {
+      for (let i = 0; i < curves[b].curve.length; ++i) {
         // 選択された点はハイライトする
         if (i === nearest_bez_itr && b === nearest_bez_bezier) {
           legacygl.color(0.9, 0, 0);
-          legacygl.vertex2(beziers[b].curve[i][0]);
+          legacygl.vertex2(curves[b].curve[i]);
           legacygl.color(1, 0.6, 0.2);
         } else {
-          legacygl.vertex2(beziers[b].curve[i][0]);
+          legacygl.vertex2(curves[b].curve[i]);
         }
       }
       legacygl.end();
@@ -154,23 +212,23 @@ function draw() {
   // draw control points
   if (document.getElementById("input_show_controlpoints").checked) {
     legacygl.color(0.2, 0.5, 1);
-    for (let b = 0; b < beziers.length; b++) {
+    for (let b = 0; b < curves.length; b++) {
       legacygl.begin(gl.LINE_STRIP);
-      for (let i = 0; i < beziers[b].points.length; i++) {
-        legacygl.vertex2(beziers[b].points[i]);
+      for (let i = 0; i < curves[b].points.length; i++) {
+        legacygl.vertex2(curves[b].points[i]);
       }
       legacygl.end();
     }
 
-    for (let b = 0; b < beziers.length; b++) {
+    for (let b = 0; b < curves.length; b++) {
       legacygl.begin(gl.POINTS);
-      for (let i = 0; i < beziers[b].points.length; i++) {
+      for (let i = 0; i < curves[b].points.length; i++) {
         if (i === nearest_cont_itr && b == nearest_cont_bezier) {
           legacygl.color(0.9, 0, 0);
-          legacygl.vertex2(beziers[b].points[i]);
+          legacygl.vertex2(curves[b].points[i]);
           legacygl.color(0.2, 0.5, 1);
         } else {
-          legacygl.vertex2(beziers[b].points[i]);
+          legacygl.vertex2(curves[b].points[i]);
         }
       }
       legacygl.end();
@@ -216,10 +274,10 @@ function init() {
 
   // ベジェ曲線を初期化
   // ポイントたちを初期化
-  beziers.push(new Bezier());
-  beziers[0].points.push([-0.5, -0.6]);
-  beziers[0].points.push([1.2, 0.5]);
-  beziers[0].points.push([-0.4, 1.3]);
+  curves.push(new Curve());
+  curves[0].points.push([-0.5, -0.6]);
+  curves[0].points.push([1.2, 0.5]);
+  curves[0].points.push([-0.4, 1.3]);
 
   // マウスが押された時
   canvas.onmousedown = function(evt) {

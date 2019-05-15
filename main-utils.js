@@ -42,9 +42,9 @@ function findNearestPoint (mouse_win) {
   let nearest_itr;
   let nearest_point;
   let nearest_bezier;
-  for (let b = 0; b < beziers.length; b++) {
-    for (let i = 0; i < beziers[b].points.length; ++i) {
-      let object_win = glu.project([beziers[b].points[i][0], beziers[b].points[i][1], 0], 
+  for (let b = 0; b < curves.length; b++) {
+    for (let i = 0; i < curves[b].points.length; ++i) {
+      let object_win = glu.project([curves[b].points[i][0], curves[b].points[i][1], 0], 
         legacygl.uniforms.modelview.value,
         legacygl.uniforms.projection.value,
         viewport);
@@ -53,7 +53,7 @@ function findNearestPoint (mouse_win) {
         dist_min = dist;
         nearest_itr = i;
         nearest_bezier = b;
-        nearest_point = beziers[b].points[i];
+        nearest_point = curves[b].points[i];
       }
     }
   }
@@ -67,9 +67,9 @@ function findNearestCurve (mouse_win) {
   let nearest_itr;
   let nearest_point;
   let nearest_bezier;
-  for (let b = 0; b < beziers.length; b++) {
-    for (let i = 0; i < beziers[b].curve.length; ++i) {
-      let object_win = glu.project([beziers[b].curve[i][0][0], beziers[b].curve[i][0][1], 0], 
+  for (let b = 0; b < curves.length; b++) {
+    for (let i = 0; i < curves[b].curve.length; ++i) {
+      let object_win = glu.project([curves[b].curve[i][0], curves[b].curve[i][1], 0], 
         legacygl.uniforms.modelview.value,
         legacygl.uniforms.projection.value,
         viewport);
@@ -78,7 +78,7 @@ function findNearestCurve (mouse_win) {
         dist_min = dist;
         nearest_itr = i;
         nearest_bezier = b;
-        nearest_point = beziers[b].curve[i][0];
+        nearest_point = curves[b].curve[i];
       }
     }
   }
