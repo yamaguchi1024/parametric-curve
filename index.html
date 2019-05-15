@@ -57,6 +57,20 @@
           <li>Alt+Shift+drag: Camera Zoom</li>
         </ul>
 
+        <h3> Creative points:</h3>
+        <ul>
+          <li>Impelement secondly Bezier curve. Implementation in main.js line TODO.</li>
+          <li>Implement a context menu, you can click right button or F12 on WebGL canvas.</li>
+          <li>Implement a Bezier curve with general n points, using De Castro's algorithm</li>
+          <li>Add and delete points by clicking right butotn in the canvas.</li>
+          <li>Change the color of the point which is closest to the current mouse point and selected points</li>
+          <li>Change the color of the closest points as mouse moves</li>
+          <li>Calculate the distance between mouse and the line, add a cotrol point to the closest line</li>
+          <li>Allow having two or more Bezier curves. It can be created via right click menu, and can be deleted by deleting all control points of the Bezier curve</li>
+          <li>Implement the division of Bezier curves. It can be tested by right click menu.</li>
+          <li>Implement the adaptive sampling of t. Calculate the uniform t sampling first, and calculate the curvature for each triangle. Add a new point to the point which has the biggest curvature, and delete the point which has a minimal curvature. Iterate this process 1000 times. (can be changed from index.html button)</li>
+        </ul>
+
         <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>
         <script src="https://button.glitch.me/button.js"></script>
 
